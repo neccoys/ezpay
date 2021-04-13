@@ -2,7 +2,8 @@
 
 namespace Liyuu\Ezpay\Providers;
 
-use Liyuu\Ezpay\Contracts\PayInterface;
+use Liyuu\Ezpay\Contracts\ProviderInterface;
+use Liyuu\Ezpay\Orders\EzOrder;
 use PayPal\Api\Amount;
 use PayPal\Api\Details;
 use PayPal\Api\Item;
@@ -12,14 +13,14 @@ use PayPal\Api\Payment;
 use PayPal\Api\RedirectUrls;
 use PayPal\Api\Transaction;
 
-class Paypal implements PayInterface
+class Paypal implements ProviderInterface
 {
 
     public function __construct()
     {
     }
 
-    public function pay($payment)
+    public function checkout(EzOrder $payment)
     {
         $shippingPrice = 2;
         $taxPrice = 0;
@@ -76,4 +77,5 @@ class Paypal implements PayInterface
             dd($e->getMessage());//錯誤提示
         }
     }
+
 }

@@ -6,20 +6,31 @@ namespace Liyuu\Ezpay;
 
 use InvalidArgumentException;
 use Illuminate\Support\Manager;
-
-use Liyuu\Ezpay\Drivers\Ecpay;
+use Liyuu\Ezpay\Contracts\ProviderInterface;
+use Liyuu\Ezpay\Providers\Ecpay;
+use Liyuu\Ezpay\Providers\PaypalProvider;
 
 class EzpayManager extends Manager implements Contracts\Factory
 {
 
-    public function with($driver)
-    {
-        return $this->driver($driver);
-    }
-
+    /**
+     * @return ProviderInterface
+     */
     protected function createEcpayDriver()
     {
-        $config = $this->config->get('services.ecpay');
+        $config = $this->config->get('ezpay.ecpay');
+
+        return $this->buildProvider(
+            Ecpay::class, $config
+        );
+    }
+
+    /**
+     * @return ProviderInterface
+     */
+    protected function createPaypalDriver()
+    {
+        $config = $this->config->get('ezpay.paypal');
 
         return $this->buildProvider(
             Ecpay::class, $config

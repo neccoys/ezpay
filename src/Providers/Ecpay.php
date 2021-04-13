@@ -5,26 +5,28 @@ namespace Liyuu\Ezpay\Providers;
 
 use Ecpay\Sdk\Exceptions\RtnException;
 use Ecpay\Sdk\Factories\Factory;
-use Liyuu\Ezpay\Contracts\PayInterface;
+use Ecpay\Sdk\Response\VerifiedArrayResponse;
+use Illuminate\Http\Request;
+use Liyuu\Ezpay\Contracts\ProviderInterface;
+use Liyuu\Ezpay\Orders\EzOrder;
 
-class Ecpay extends AbstractProvider implements PayInterface
+class Ecpay extends AbstractProvider implements ProviderInterface
 {
+    private $apiUrl;
     private $merchantID;
     private $hashKey;
     private $hashIv;
     private $paymentType = 'aio';
 
-    private $returnURL = 'https://www.ecpay.com.tw/example/receive';
-
-
-    public function __construct()
+    public function __construct(Request $request, $config)
     {
-        $this->merchantID = config('ezpay.ecpay.merchantID');
-        $this->hashKey = config('ezpay.ecpay.hashKey');
-        $this->hashIv =  config('ezpay.ecpay.hashIv');
+        $this->apiUrl = $config['apiUrl'];
+        $this->merchantID = $config['merchantID'];
+        $this->hashKey = $config['hashKey'];
+        $this->hashIv =  $config['hashIv'];
     }
 
-    public function pay($ezorder)
+    public function checkout(EzOrder $ezorder)
     {
         try {
             $factory = new Factory();
@@ -43,15 +45,45 @@ class Ecpay extends AbstractProvider implements PayInterface
                 'EncryptType' => 1,
             ];
 
-            $action = config('ezpay.ecpay.apiUrl');
+            echo $autoSubmitFormService->generate($input, $this->apiUrl);
 
-            echo $autoSubmitFormService->generate($input, $action);
         } catch (RtnException $e) {
-            dd($e->getMessage());
             echo '(' . $e->getCode() . ')' . $e->getMessage() . PHP_EOL;
         }
     }
 
+    public function callback(Request $request, string $orderNo)
+    {
+        try {
+            $factory = new Factory;
+            $checkoutResponse = $factory->createWithHash(VerifiedArrayResponse::class, $this->hashKey, $this->hashIv);
+
+            $_POST = [
+                'MerchantID' => $this->merchantID,
+                'MerchantTradeNo' => $orderNo,
+                'PaymentDate' => '2019/05/09 00:01:21',
+                'PaymentType' => 'Credit_CreditCard',
+                'PaymentTypeChargeFee' => '1',
+                'RtnCode' => '1',
+                'RtnMsg' => '交易成功',
+                'SimulatePaid' => '0',
+                'TradeAmt' => '500',
+                'TradeDate' => '2019/05/09 00:00:18',
+                'TradeNo' => '1905090000188278',
+                'CheckMacValue' => '59B085BAEC4269DC1182D48DEF106B431055D95622EB285DECD400337144C698',
+            ];
+
+            var_dump($checkoutResponse->get($_POST));
+        } catch (RtnException $e) {
+            echo '(' . $e->getCode() . ')' . $e->getMessage() . PHP_EOL;
+        }
+    }
+
+    /**
+     * 設定綠界付款方法
+     * @param $method
+     * @return string
+     */
     public function setPaymentMethod($method)
     {
         $method = array_intersect([
@@ -60,6 +92,11 @@ class Ecpay extends AbstractProvider implements PayInterface
         return implode('#', $method);
     }
 
+    /**
+     * 綠界商品組合#
+     * @param $items
+     * @return string
+     */
     public function setItems($items)
     {
         $itemsList = [];

@@ -9,6 +9,11 @@ use Liyuu\Ezpay\Contracts\Factory;
 
 class EzpayServiceProvider extends ServiceProvider implements DeferrableProvider
 {
+    /**
+     * Register the service provider.
+     *
+     * @return void
+     */
     public function register()
     {
         $this->app->singleton(Factory::class, function ($app) {
@@ -16,6 +21,11 @@ class EzpayServiceProvider extends ServiceProvider implements DeferrableProvider
         });
     }
 
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array
+     */
     public function provides()
     {
         return [Factory::class];
